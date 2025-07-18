@@ -17,6 +17,9 @@ WORKDIR /var/www/laravel
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
+RUN php artisan migrate --force
+
+
 # Copiar archivos públicos a la raíz del servidor
 RUN rm -rf /var/www/html \
     && ln -s /var/www/laravel/public /var/www/html
