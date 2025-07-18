@@ -1,22 +1,27 @@
-# Dockerfile
 FROM php:8.2-apache
 
-# Instalar dependencias necesarias
+# Instalar extensiones de PHP necesarias
 RUN apt-get update && apt-get install -y \
     libzip-dev unzip git curl \
     && docker-php-ext-install pdo pdo_mysql zip
 
+# Habilitar mod_rewrite para Laravel
+RUN a2enmod rewrite
+
+# Establecer configuración para que Laravel funcione correctamente
+COPY . /var/www/laravel
+
+WORKDIR /var/www/laravel
+
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Copiar archivos del proyecto al contenedor
-COPY . /var/www/html
+# Copiar archivos públicos a la raíz del servidor
+RUN rm -rf /var/www/html \
+    && ln -s /var/www/laravel/public /var/www/html
 
-# Establecer directorio de trabajo
-WORKDIR /var/www/html
+# Dar permisos adecuados
+RUN chown -R www-data:www-data /var/www/laravel/storage /var/www/laravel/bootstrap/cache
 
-# Dar permisos a las carpetas necesarias
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Exponer el puerto 80
 EXPOSE 80
